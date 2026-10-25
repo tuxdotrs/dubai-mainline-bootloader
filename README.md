@@ -13,6 +13,9 @@ generation menu, so `nixos-rebuild switch` updates the kernel without writing
 
     u-boot/       submodule: u-boot/u-boot, main at 8649a54d (no fork; past v2026.10
                   for ufs-qcom regulator support, needed on UFS 3.1 phones)
+    patches/      applied on top: qcom PMIC GPIO for PM7325 (volume up)
+    dubai.env     U-Boot environment: boot menu per NixOS generation
+    default.nix   the boot.img; `--arg debug true` for a USB serial shell
 
 Starting points in U-Boot: `qcm6490_defconfig` (sc7280 family),
 `board/qualcomm/qcom-phone.config`, `drivers/clk/qcom/clock-sc7280.c`,

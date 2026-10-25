@@ -13,6 +13,9 @@
   # Only the dubai DTB is used from it
 , kernel ? (import ../userspace/default.nix { }).config.mobile.boot.stage-1.kernel.package
 , panel ? "csot"
+  # Bring-up: USB serial console (/dev/ttyACM0 on the PC) from the start and
+  # stop at U-Boot's shell instead of booting. nix-build --arg debug true
+, debug ? false
 }:
 
 assert pkgs.lib.assertMsg (builtins.pathExists ./u-boot/Makefile)
@@ -29,6 +32,10 @@ let
       path = ./u-boot;
       filter = path: _: baseNameOf path != ".git";
     };
+    extraPatches = [
+      # Volume up: PM7325 GPIO 6 with bias-pull-up (gpio-keys)
+      ./patches/qcom-pmic-gpio-pm7325-volume-up.patch
+    ];
     defconfig = "qcom_defconfig";
     extraConfig = builtins.readFile ./u-boot/board/qualcomm/qcom-phone.config + ''
       CONFIG_ENV_DEFAULT_ENV_TEXT_FILE="board/qualcomm/dubai.env"
@@ -37,6 +44,8 @@ let
       CONFIG_SYS_PBSIZE=4132
       # dubai.env boots /boot/extlinux/extlinux.conf with sysboot
       CONFIG_CMD_SYSBOOT=y
+      # preboot sets the volume-up pin's VIN (see dubai.env)
+      CONFIG_CMD_PMIC=y
     '';
     filesToInstall = [ "u-boot-nodtb.bin" "u-boot.bin" ".config" ];
     extraMeta.platforms = [ "aarch64-linux" ];
@@ -44,7 +53,9 @@ let
     # qcom-phone.config's ENV_DEFAULT_ENV_TEXT_FILE is converted with xxd
     nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.xxd ];
     postPatch = old.postPatch + ''
-      cp ${./dubai.env} board/qualcomm/dubai.env
+      install -m 644 ${./dubai.env} board/qualcomm/dubai.env
+    '' + pkgs.lib.optionalString debug ''
+      printf '%s\n' 'preboot=run serial_gadget; pmic dev pmic@1; pmic write 0x8d41 0x01; scsi scan' 'bootdelay=-1' >> board/qualcomm/dubai.env
     '';
   });
 in
