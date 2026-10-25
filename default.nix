@@ -5,7 +5,8 @@
 # appended and in the header v2 dtb section, the same layout as our Linux
 # boot.img. U-Boot then runs on the DTB as ABL fixed it up (memory, cmdline).
 # Config: qcom_defconfig + board/qualcomm/qcom-phone.config (boot menu, USB
-# console gadget, fastboot), cross-compiled from x86_64.
+# console gadget, fastboot), cross-compiled from x86_64. dubai.env boots the
+# extlinux.conf that userspace writes to /boot (a menu entry per generation).
 { pkgs ? import ../userspace/mobile-nixos/pkgs.nix {
     overlays = [ (import ../userspace/mobile-nixos/overlay/overlay.nix) ];
   }
@@ -31,6 +32,11 @@ let
     defconfig = "qcom_defconfig";
     extraConfig = builtins.readFile ./u-boot/board/qualcomm/qcom-phone.config + ''
       CONFIG_ENV_DEFAULT_ENV_TEXT_FILE="board/qualcomm/dubai.env"
+      # extlinux APPEND + ABL's ~1 KB command line ($abl_bootargs)
+      CONFIG_SYS_CBSIZE=4096
+      CONFIG_SYS_PBSIZE=4132
+      # dubai.env boots /boot/extlinux/extlinux.conf with sysboot
+      CONFIG_CMD_SYSBOOT=y
     '';
     filesToInstall = [ "u-boot-nodtb.bin" "u-boot.bin" ".config" ];
     extraMeta.platforms = [ "aarch64-linux" ];
