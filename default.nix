@@ -1,5 +1,5 @@
-# U-Boot for dubai as a boot.img for Motorola's ABL. Work in progress: test
-# with `fastboot boot` only, never flash it.
+# U-Boot for dubai as a boot.img for Motorola's ABL, installed on boot_b.
+# Test changes with `fastboot boot` before writing boot_b (back it up first).
 #
 # ABL loads it like a Linux kernel: gzip'd u-boot-nodtb.bin with the dubai DTB
 # appended and in the header v2 dtb section, the same layout as our Linux

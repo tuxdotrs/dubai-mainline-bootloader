@@ -4,12 +4,16 @@ Second-stage bootloader for [dubai-mainline](https://github.com/tuxdotrs/dubai-m
 (Motorola Edge 30, SM7325): mainline [U-Boot](https://github.com/u-boot/u-boot),
 chainloaded by Motorola's stock ABL as the boot.img.
 
-**Status: work in progress, not used for booting yet.** The phone currently
-boots ABL → boot.img (kernel + Mobile NixOS stage-1) directly.
+**Status: in use.** It is installed on `boot_b`, the active slot: ABL →
+U-Boot (this boot.img) → a menu of NixOS generations (volume keys + power, 5 s
+to the default) → each generation's kernel, initrd and own DTB from `/boot` on
+userdata. `switch-to-configuration` updates the menu and DTBs, so kernel and
+DT changes no longer need a boot partition write; `boot_b` is only rewritten
+for U-Boot changes. Slot a keeps a plain Linux boot.img as the fallback
+(`fastboot --set-active=a`).
 
-Goal: ABL → U-Boot (boot.img) → kernel + initrd from the rootfs, with a
-generation menu, so `nixos-rebuild switch` updates the kernel without writing
-`boot_a`. Test only with `fastboot boot`; never flash until it boots.
+Test a new build with `fastboot boot` first, and back up `boot_b` before
+writing it. Details: dubai-mainline `docs/boot-chain.md` (U-Boot path).
 
     u-boot/       submodule: u-boot/u-boot, main at 8649a54d (no fork; past v2026.10
                   for ufs-qcom regulator support, needed on UFS 3.1 phones)
